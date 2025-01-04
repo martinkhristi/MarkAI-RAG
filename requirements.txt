@@ -1,0 +1,6 @@
+streamlit
+pandas
+openpyxl
+markitdown
+langchain-groq
+pandasai
