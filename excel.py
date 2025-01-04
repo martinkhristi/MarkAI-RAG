@@ -36,7 +36,7 @@ st.markdown("<h1 style='text-align: center; color: #0072C6;'>Data Analysis Platf
 # Directly load the Groq LLM with API key
 @st.cache_resource
 def load_groq_llm():
-    return ChatGroq(model_name="llama-3.3-70b-versatile", api_key="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")
+    return ChatGroq(model_name="llama-3.3-70b-versatile", api_key="GROQ_API_KEY")
 
 # Sidebar for user inputs
 st.sidebar.title("Settings")
