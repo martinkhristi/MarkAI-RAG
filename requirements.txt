@@ -1,7 +1,9 @@
-seaborn
-matplotlib
 streamlit
 pandas
-openpyxl
+matplotlib
+seaborn
+plotly
 langchain_groq
 pandasai
+openpyxl
+
