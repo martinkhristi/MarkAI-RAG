@@ -150,7 +150,12 @@ else:
 
     # Footer
     st.markdown(
-        "<footer style='text-align: center; padding: 10px; background-color: #0072C6; color: #FFFFFF;'>Powered by AI and Open Source Tools</footer>",
+        """
+        <footer style='text-align: center; padding: 10px; background-color: #0072C6; color: #FFFFFF;'>
+            Powered by AI and Open Source Tools<br>
+            Made with ❤️ by Martin Khristi
+        </footer>
+        """,
         unsafe_allow_html=True,
     )
 
