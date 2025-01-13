@@ -1,6 +1,7 @@
+seaborn
+matplotlib
 streamlit
 pandas
 openpyxl
-markitdown
-langchain-groq
+langchain_groq
 pandasai
