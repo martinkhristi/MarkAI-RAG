@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import time
+import matplotlib.pyplot as plt
+import seaborn as sns
 from langchain_groq.chat_models import ChatGroq
 from pandasai import SmartDataframe
 
@@ -106,8 +108,20 @@ else:
                     response = df_groq.chat(query)
                     end_time = time.time()
 
-                    # Display the response and processing time
-                    st.write(response)
+                    # Display the response or chart based on the query
+                    if "plot" in query.lower() or "visualize" in query.lower():
+                        if "popularity" in data.columns:
+                            st.subheader("Visualization")
+                            plt.figure(figsize=(10, 6))
+                            sns.histplot(data['popularity'], kde=True, bins=30, color="blue")
+                            plt.title("Distribution of Popularity Scores")
+                            plt.xlabel("Popularity Score")
+                            plt.ylabel("Frequency")
+                            st.pyplot(plt)
+                        else:
+                            st.error("Column for visualization not found.")
+                    else:
+                        st.write(response)
                     st.success(f"Query processed in {end_time - start_time:.2f} seconds.")
                 except Exception as e:
                     st.error(f"An error occurred during query processing: {e}")
