@@ -1,13 +1,16 @@
 import streamlit as st
 import pandas as pd
-import os
 import time
-from markitdown import MarkItDown
 from langchain_groq.chat_models import ChatGroq
 from pandasai import SmartDataframe
 
 # Set up Streamlit page
-st.set_page_config(page_title="Use RAG with Groq API, Microsoft MarkItDown, and PandasAI for smart document querying", layout="wide")
+st.set_page_config(
+    page_title="Smart Data Analysis with Groq API and PandasAI",
+    layout="wide",
+)
+
+# Add custom styling
 st.markdown(
     """
     <style>
@@ -30,8 +33,16 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Add a heading
-st.markdown("<h1 style='text-align: center; color: #0072C6;'>Data Analysis Platform</h1>", unsafe_allow_html=True)
+# Add a powerful introductory prompt
+st.markdown(
+    """
+    <div style='background-color: #0072C6; padding: 20px; border-radius: 10px; color: #FFFFFF; text-align: center;'>
+        <h2>Welcome to Smart Data Analysis Platform</h2>
+        <p>I am an experienced Python expert and Data Scientist here to assist you in analyzing and visualizing your data effortlessly. Upload your CSV or Excel file, ask questions in plain English, and let the power of AI provide insights!</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 # Function to authenticate Groq API
 @st.cache_resource
@@ -45,7 +56,7 @@ authenticated = False
 
 if groq_api_key:
     try:
-        # Try authenticating with the provided key
+        # Authenticate with the provided key
         groq_llm = authenticate_groq(groq_api_key)
         authenticated = True
         st.sidebar.success("Successfully authenticated!")
@@ -55,63 +66,53 @@ if groq_api_key:
 if not authenticated:
     st.warning("Please authenticate with your Groq API Key in the sidebar to use the application.")
 else:
-    # Sidebar for user inputs
-    st.sidebar.title("Settings")
-    file_type = st.sidebar.radio("Select file type", ("CSV", "Excel", "PDF", "PowerPoint", "Word", "Image"))
-    uploaded_file = st.sidebar.file_uploader(f"Upload a {file_type} file", type=["csv", "xls", "xlsx", "pdf", "pptx", "docx", "jpg", "png"])
+    # Sidebar for file upload
+    st.sidebar.title("Upload File")
+    file_type = st.sidebar.radio("Select file type", ("CSV", "Excel"))
+    uploaded_file = st.sidebar.file_uploader(f"Upload a {file_type} file", type=["csv", "xls", "xlsx"])
 
-    # Main application content starts here
+    # Main application content
     if uploaded_file is not None:
-        file_extension = uploaded_file.name.split(".")[-1]
+        try:
+            # Load data based on file type
+            if file_type == "CSV":
+                data = pd.read_csv(uploaded_file)
+            else:
+                data = pd.read_excel(uploaded_file, engine="openpyxl")
 
-        # Initialize MarkItDown
-        md = MarkItDown()
+            # Display data preview
+            st.subheader("Data Preview")
+            st.write(data.head())
 
-        if file_type in ["PDF", "PowerPoint", "Word", "Image"]:
-            st.subheader("File Conversion to Markdown")
-            try:
-                markdown_result = md.convert(uploaded_file)
-                st.write("### Converted Markdown Content")
-                st.text(markdown_result.text_content)
-            except Exception as e:
-                st.error(f"Error during conversion: {e}")
+            # Display general information about the data
+            st.subheader("General Information")
+            st.write(f"Shape of the dataset: {data.shape}")
+            st.write(f"Data Types:\n{data.dtypes}")
+            st.write(f"Memory Usage: {data.memory_usage(deep=True).sum()} bytes")
 
-        elif file_type in ["CSV", "Excel"]:
-            try:
-                if file_type == "CSV":
-                    data = pd.read_csv(uploaded_file)
-                else:
-                    # Explicitly specify the engine for Excel files
-                    data = pd.read_excel(uploaded_file, engine="openpyxl")
+            # SmartDataframe setup for AI-driven interaction
+            df_groq = SmartDataframe(data, config={'llm': groq_llm})
 
-                # Quick preview of the data
-                st.subheader("Data Preview")
-                st.write(data.head())
+            # User input for natural language query
+            query = st.text_input(
+                "Ask me anything about your data, and I'll provide clear insights or visualizations:",
+                placeholder="For example, 'Show me the average sales per month' or 'Visualize the top 5 products by revenue.'"
+            )
 
-                # General Information
-                st.subheader("General Information")
-                st.write(f"Shape of the dataset: {data.shape}")
-                st.write(f"Data Types:\n{data.dtypes}")
-                st.write(f"Memory Usage: {data.memory_usage(deep=True).sum()} bytes")
+            if query:
+                try:
+                    # Query processing
+                    start_time = time.time()
+                    response = df_groq.chat(query)
+                    end_time = time.time()
 
-                # SmartDataframe setup for language model interaction
-                df_groq = SmartDataframe(data, config={'llm': groq_llm})
-
-                # User query input for natural language analysis
-                query = st.text_input("Enter your query about the data:")
-                if query:
-                    try:
-                        start_time = time.time()  # Start timing
-                        response = df_groq.chat(query)
-                        end_time = time.time()  # End timing
-                        processing_time = end_time - start_time
-
-                        st.write(response)
-                        st.success(f"Query processed in {processing_time:.2f} seconds.")
-                    except Exception as e:
-                        st.error(f"An error occurred during query processing: {e}")
-            except Exception as e:
-                st.error(f"Error processing file: {e}")
+                    # Display the response and processing time
+                    st.write(response)
+                    st.success(f"Query processed in {end_time - start_time:.2f} seconds.")
+                except Exception as e:
+                    st.error(f"An error occurred during query processing: {e}")
+        except Exception as e:
+            st.error(f"Error processing file: {e}")
 
     # Footer
     st.markdown(
