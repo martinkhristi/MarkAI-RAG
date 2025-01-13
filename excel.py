@@ -1,8 +1,9 @@
 import streamlit as st
 import pandas as pd
-import time
 import matplotlib.pyplot as plt
 import seaborn as sns
+import plotly.express as px
+import time
 from langchain_groq.chat_models import ChatGroq
 from pandasai import SmartDataframe
 
@@ -108,18 +109,37 @@ else:
                     response = df_groq.chat(query)
                     end_time = time.time()
 
-                    # Display the response or chart based on the query
-                    if "plot" in query.lower() or "visualize" in query.lower():
-                        if "popularity" in data.columns:
-                            st.subheader("Visualization")
-                            plt.figure(figsize=(10, 6))
-                            sns.histplot(data['popularity'], kde=True, bins=30, color="blue")
-                            plt.title("Distribution of Popularity Scores")
-                            plt.xlabel("Popularity Score")
-                            plt.ylabel("Frequency")
-                            st.pyplot(plt)
+                    # Dynamically render charts based on query
+                    st.subheader("Generated Visualization")
+
+                    if "distribution" in query.lower():
+                        column = "popularity"  # Default column for distribution
+                        for col in data.columns:
+                            if col.lower() in query.lower():
+                                column = col
+                                break
+                        # Plotly interactive visualization
+                        fig = px.histogram(data, x=column, nbins=30, title=f"Distribution of {column.capitalize()}")
+                        fig.update_layout(xaxis_title=column.capitalize(), yaxis_title="Frequency")
+                        st.plotly_chart(fig)
+                    elif "scatter" in query.lower() and "vs" in query.lower():
+                        cols = query.lower().split("vs")
+                        col_x = cols[0].split()[-1].strip()
+                        col_y = cols[1].strip()
+                        if col_x in data.columns and col_y in data.columns:
+                            # Plotly scatter plot
+                            fig = px.scatter(data, x=col_x, y=col_y, title=f"Scatter Plot of {col_x.capitalize()} vs {col_y.capitalize()}")
+                            fig.update_layout(xaxis_title=col_x.capitalize(), yaxis_title=col_y.capitalize())
+                            st.plotly_chart(fig)
                         else:
-                            st.error("Column for visualization not found.")
+                            st.error("Columns specified for scatter plot not found in the dataset.")
+                    elif "bar" in query.lower():
+                        column = "artist_name"  # Example: Use an artist_name column
+                        if column in data.columns:
+                            fig = px.bar(data, x=column, y="popularity", title="Bar Chart Example")
+                            st.plotly_chart(fig)
+                        else:
+                            st.error("The specified column for the bar chart does not exist.")
                     else:
                         st.write(response)
                     st.success(f"Query processed in {end_time - start_time:.2f} seconds.")
@@ -133,3 +153,4 @@ else:
         "<footer style='text-align: center; padding: 10px; background-color: #0072C6; color: #FFFFFF;'>Powered by AI and Open Source Tools</footer>",
         unsafe_allow_html=True,
     )
+
